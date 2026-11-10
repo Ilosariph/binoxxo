@@ -1,10 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DIFFICULTIES, EMPTY, O, X, conflicts, generate, isSolved, linePatterns, nextDeduction, solveLogic,
+  DIFFICULTIES, EMPTY, SIZES, O, X, conflicts, generate, isSolved, linePatterns, nextDeduction, solveLogic,
 } from '../public/js/binoxxo.js';
 
-const SEEDS = Array.from({ length: 25 }, (_, i) => `s${i}`);
+const SEEDS = Array.from({ length: 15 }, (_, i) => `s${i}`);
+const DIFFS = Object.keys(DIFFICULTIES);
+const COMBOS = SIZES.flatMap(n => DIFFS.map(d => [n, d]));
+const clues = p => p.givens.filter(v => v).length;
 
 /** Counts solutions by brute-force backtracking (stops at 2). */
 function countSolutions(givens, size) {
@@ -24,11 +27,12 @@ function countSolutions(givens, size) {
 }
 
 test('same seed and difficulty give the same puzzle', () => {
-  for (const d of Object.keys(DIFFICULTIES)) {
-    assert.deepEqual(generate('abc', d).givens, generate('abc', d).givens);
+  for (const [n, d] of COMBOS) {
+    assert.deepEqual(generate('abc', n, d).givens, generate('abc', n, d).givens);
   }
-  assert.notDeepEqual(generate('abc', 'hard').givens, generate('abd', 'hard').givens);
-  assert.notDeepEqual(generate('abc', 'normal').solution, generate('abc', 'hard').solution);
+  assert.notDeepEqual(generate('abc', 10, 'hard').givens, generate('abd', 10, 'hard').givens);
+  assert.notDeepEqual(generate('abc', 10, 'normal').solution, generate('abc', 10, 'hard').solution);
+  assert.throws(() => generate('abc', 7, 'easy'));
 });
 
 test('line patterns are balanced and triple-free', () => {
@@ -52,10 +56,12 @@ test('conflicts flags triples, over-full lines and duplicate lines', () => {
 });
 
 test('solutions are valid and givens match them', () => {
-  for (const d of Object.keys(DIFFICULTIES)) {
+  for (const [n, d] of COMBOS) {
     for (const s of SEEDS) {
-      const p = generate(s, d);
-      assert.equal(p.size, DIFFICULTIES[d].size);
+      const p = generate(s, n, d);
+      assert.equal(p.size, n);
+      assert.equal(p.solution.length, n * n);
+      assert.ok(clues(p) >= Math.round(DIFFICULTIES[d].keep * n * n));
       assert.ok(isSolved(p.solution, p.size), `${d}/${s} solution invalid`);
       p.givens.forEach((v, i) => { if (v) assert.equal(v, p.solution[i]); });
       assert.ok(p.givens.some(v => v === EMPTY));
@@ -65,9 +71,9 @@ test('solutions are valid and givens match them', () => {
 });
 
 test('puzzles are solvable by logic at their level (no guessing)', () => {
-  for (const d of Object.keys(DIFFICULTIES)) {
+  for (const [n, d] of COMBOS) {
     for (const s of SEEDS) {
-      const p = generate(s, d);
+      const p = generate(s, n, d);
       const cells = p.givens.slice();
       assert.ok(solveLogic(cells, p.size, DIFFICULTIES[d].level), `${d}/${s} not logic-solvable`);
       assert.deepEqual(cells, p.solution);
@@ -76,24 +82,32 @@ test('puzzles are solvable by logic at their level (no guessing)', () => {
 });
 
 test('puzzles have exactly one solution', () => {
-  for (const d of ['easy', 'normal']) {
-    for (const s of SEEDS.slice(0, 10)) {
-      const p = generate(s, d);
+  for (const [n, d] of COMBOS.filter(([n]) => n <= 8)) {
+    for (const s of SEEDS.slice(0, 8)) {
+      const p = generate(s, n, d);
       assert.equal(countSolutions(p.givens, p.size), 1, `${d}/${s}`);
     }
   }
 });
 
-test('hard needs the pattern level on at least some seeds', () => {
+test('easier difficulties leave more clues', () => {
+  for (const n of SIZES) {
+    const avg = d => SEEDS.reduce((a, s) => a + clues(generate(s, n, d)), 0) / SEEDS.length;
+    const [e, m, h] = DIFFS.map(avg);
+    assert.ok(e > m && m > h, `${n}: ${e} ${m} ${h}`);
+  }
+});
+
+test('10×10 hard needs the pattern level on at least some seeds', () => {
   const needsLevel2 = SEEDS.some(s => {
-    const p = generate(s, 'hard');
+    const p = generate(s, 10, 'hard');
     return !solveLogic(p.givens.slice(), p.size, 1);
   });
   assert.ok(needsLevel2);
 });
 
 test('nextDeduction always points at an empty cell until solved', () => {
-  const p = generate('hint', 'hard');
+  const p = generate('hint', 10, 'hard');
   const cells = p.givens.slice();
   let steps = 0;
   while (!isSolved(cells, p.size)) {

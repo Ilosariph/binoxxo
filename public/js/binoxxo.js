@@ -9,12 +9,16 @@
 
 export const EMPTY = 0, X = 1, O = 2;
 
+export const SIZES = [6, 8, 10];
+export const DEFAULT_SIZE = 10;
+
 // level 1: pairs, sandwiches and count completion only.
 // level 2: additionally intersects all still-possible line patterns (incl. the no-duplicate rule).
+// keep: share of cells that stay given at least (0 = remove as many as logic allows).
 export const DIFFICULTIES = {
-  easy: { size: 6, level: 1, minClues: 14 },
-  normal: { size: 8, level: 1, minClues: 20 },
-  hard: { size: 10, level: 2, minClues: 0 },
+  easy: { level: 1, keep: 0.45 },
+  normal: { level: 1, keep: 0.33 },
+  hard: { level: 2, keep: 0 },
 };
 
 // Hashes a seed string into a 32-bit integer (FNV-1a + final avalanche).
@@ -252,12 +256,14 @@ function randomSolution(size, rng) {
 }
 
 /**
- * Deterministic from (seed, difficulty). Clues are removed while the puzzle stays solvable
+ * Deterministic from (seed, size, difficulty). Clues are removed while the puzzle stays solvable
  * by pure logic at the difficulty's level, so the solution is unique and needs no guessing.
  */
-export function generate(seed, difficulty) {
-  const { size, level, minClues } = DIFFICULTIES[difficulty];
-  const rng = mulberry32(hashSeed(`binoxxo:${difficulty}:${seed}`));
+export function generate(seed, size, difficulty) {
+  if (!SIZES.includes(size)) throw new Error(`bad size ${size}`);
+  const { level, keep } = DIFFICULTIES[difficulty];
+  const minClues = Math.round(keep * size * size);
+  const rng = mulberry32(hashSeed(`binoxxo:${size}:${difficulty}:${seed}`));
   const solution = randomSolution(size, rng);
   const givens = solution.slice();
   let clues = givens.length;
@@ -268,5 +274,5 @@ export function generate(seed, difficulty) {
     if (solveLogic(givens.slice(), size, level)) clues--;
     else givens[i] = v;
   }
-  return { seed, difficulty, size, givens, solution };
+  return { seed, size, difficulty, givens, solution };
 }

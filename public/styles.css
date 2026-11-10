@@ -330,6 +330,9 @@ kbd { font-family: inherit; border: 1px solid var(--ink-muted); border-radius: 3
   .top-bar { padding: 0.5rem 0.75rem 0.15rem; }
   .bottom-controls { padding: 0.25rem 0.75rem 0.5rem; }
   .controls-row select { max-width: 8.5rem; }
+  .top-controls .controls-row { flex-wrap: wrap; }
+  .top-controls .controls-row input[type="text"] { flex: 1 1 6rem; min-width: 0; }
+  .top-controls .controls-row select { order: 1; flex: 1 1 40%; max-width: none; }
 }
 
 /* ── Desktop: content starts at top ── */

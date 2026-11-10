@@ -1,4 +1,4 @@
-import { DIFFICULTIES, EMPTY, O, X, conflicts, generate, isFull, isSolved, nextDeduction, randomSeed } from './binoxxo.js';
+import { DIFFICULTIES, EMPTY, SIZES, O, X, conflicts, generate, isFull, isSolved, nextDeduction, randomSeed } from './binoxxo.js';
 
 const $ = s => document.querySelector(s);
 
@@ -35,26 +35,21 @@ const SYM = { [X]: 'X', [O]: 'O' };
 
 // ── Controls ──
 
+const savedSize = store.get('size');
+if (savedSize && $(`#sizeSelect option[value="${savedSize}"]`)) $('#sizeSelect').value = savedSize;
 const savedDiff = store.get('difficulty');
 if (savedDiff && $(`#diffSelect option[value="${savedDiff}"]`)) $('#diffSelect').value = savedDiff;
 
 $('#newBtn').addEventListener('click', () => { $('#seedInput').value = ''; loadGame(); });
 $('#retryBtn').addEventListener('click', () => { if (puzzle) $('#seedInput').value = puzzle.seed; loadGame(); });
 $('#seedInput').addEventListener('keydown', e => { if (e.key === 'Enter') loadGame(); });
-$('#diffSelect').addEventListener('change', () => {
-  store.set('difficulty', $('#diffSelect').value);
-  $('#seedInput').value = '';
-  let savedGame = null;
-try { savedGame = JSON.parse(store.get('game') || 'null'); } catch { /* corrupt save */ }
-try {
-  if (!savedGame || !DIFFICULTIES[savedGame.difficulty]) throw 0;
-  const n = DIFFICULTIES[savedGame.difficulty].size;
-  if (savedGame.cells.length !== n * n) throw 0;
-  loadGame(savedGame);
-} catch {
-  loadGame();
+for (const [sel, key] of [['#sizeSelect', 'size'], ['#diffSelect', 'difficulty']]) {
+  $(sel).addEventListener('change', () => {
+    store.set(key, $(sel).value);
+    $('#seedInput').value = '';
+    loadGame();
+  });
 }
-});
 $('#undoBtn').addEventListener('click', undo);
 $('#hintBtn').addEventListener('click', hint);
 
@@ -87,8 +82,9 @@ function loadGame(saved = null) {
   confettiRun++;
   $('#winBanner').classList.remove('show');
   const difficulty = saved ? saved.difficulty : $('#diffSelect').value;
+  const size = saved ? saved.size : +$('#sizeSelect').value;
   const seed = saved ? saved.seed : ($('#seedInput').value.trim() || randomSeed());
-  puzzle = generate(seed, difficulty);
+  puzzle = generate(seed, size, difficulty);
   cells = saved ? Uint8Array.from(saved.cells) : puzzle.givens.slice();
   status = saved ? 'playing' : 'ready';
   moves = saved ? saved.moves : 0;
@@ -97,11 +93,12 @@ function loadGame(saved = null) {
   history = [];
   cursor = 0;
   $('#diffSelect').value = difficulty;
+  $('#sizeSelect').value = size;
   $('#seedInput').value = puzzle.seed;
-  $('#seedDisplay').innerHTML = `seed: <code></code> &middot; ${$('#diffSelect').selectedOptions[0].text}`;
+  $('#seedDisplay').innerHTML = `seed: <code></code> &middot; ${size}×${size} &middot; ${$('#diffSelect').selectedOptions[0].text}`;
   $('#seedDisplay code').textContent = puzzle.seed;
   $('#timerDisplay').textContent = formatTime(resumeAt);
-  $('#noteDisplay').textContent = saved ? 'resumed' : 'tap a cell: X → O → empty';
+  $('#noteDisplay').textContent = saved ? 'resumed' : 'tap: X → O → empty';
   renderBoard();
   if (saved) startTimer();
   else store.set('game', '');
@@ -110,7 +107,7 @@ function loadGame(saved = null) {
 function save() {
   if (status !== 'playing') { store.set('game', ''); return; }
   store.set('game', JSON.stringify({
-    seed: puzzle.seed, difficulty: puzzle.difficulty, cells: [...cells], moves, hints, elapsed: elapsed(),
+    seed: puzzle.seed, size: puzzle.size, difficulty: puzzle.difficulty, cells: [...cells], moves, hints, elapsed: elapsed(),
   }));
 }
 addEventListener('pagehide', save);
@@ -249,7 +246,7 @@ function win() {
   if (hints) {
     extra = ` · ${hints} hint${hints > 1 ? 's' : ''}`;
   } else {
-    const key = `best:${puzzle.difficulty}`;
+    const key = `best:${puzzle.size}:${puzzle.difficulty}`;
     const best = parseFloat(store.get(key));
     if (!(best <= sec)) {
       store.set(key, sec);
@@ -335,9 +332,8 @@ function launchConfetti() {
 let savedGame = null;
 try { savedGame = JSON.parse(store.get('game') || 'null'); } catch { /* corrupt save */ }
 try {
-  if (!savedGame || !DIFFICULTIES[savedGame.difficulty]) throw 0;
-  const n = DIFFICULTIES[savedGame.difficulty].size;
-  if (savedGame.cells.length !== n * n) throw 0;
+  if (!savedGame || !DIFFICULTIES[savedGame.difficulty] || !SIZES.includes(savedGame.size)) throw 0;
+  if (savedGame.cells.length !== savedGame.size ** 2) throw 0;
   loadGame(savedGame);
 } catch {
   loadGame();

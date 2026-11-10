@@ -2,9 +2,9 @@
 
 Fill the grid with X and O — no three in a row, equal counts, no identical lines.
 
-- Easy 6×6, Normal 8×8, Hard 10×10; every puzzle has exactly one solution and needs no guessing.
+- Grid 6×6, 8×8 or 10×10 (default) × Easy / Normal / Hard; every puzzle has exactly one solution and needs no guessing.
 - Seeded puzzles (share a seed, Retry the same one), undo, hints, optional rule-break highlighting.
-- Running game is auto-saved; best times per difficulty (hint-free solves only); dark mode.
+- Running game is auto-saved; best times per size + difficulty (hint-free solves only); dark mode.
 - Mouse/touch (tap cycles X → O → empty, right-click backwards) and keyboard (arrows, `X`/`O`, `⌫`, `Ctrl+Z`, `H`).
 
 Static site (HTML/CSS/vanilla JS, no build step); puzzle generation runs client-side.
