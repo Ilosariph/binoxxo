@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Binoxxo</title>
+<meta name="description" content="Fill the grid with X and O — no three in a row, equal counts, no identical lines.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<div class="top-bar">
+  <h1>Bino<span>xxo</span></h1>
+  <div class="timer-info">
+    <button id="darkToggle" class="icon-btn" title="Toggle dark mode">&#9790;</button>
+    <div class="settings-wrap">
+      <button class="icon-btn" id="settingsBtn" title="Settings">&#9881;</button>
+      <div class="settings-panel" id="settingsPanel" hidden>
+        <button class="settings-item" id="timerItem">Show timer</button>
+        <button class="settings-item" id="errorsItem">Highlight rule breaks</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="top-controls">
+  <div class="controls-row">
+    <input type="text" id="seedInput" placeholder="seed">
+    <select id="diffSelect">
+      <option value="easy">Easy</option>
+      <option value="normal" selected>Normal</option>
+      <option value="hard">Hard</option>
+    </select>
+    <button id="retryBtn">Retry</button>
+    <button class="btn-accent" id="newBtn">New</button>
+  </div>
+  <div class="seed-display"><span id="seedDisplay"></span></div>
+</div>
+
+<!-- grows on mobile to push board + controls toward bottom of screen -->
+<div class="mobile-spacer"></div>
+
+<div class="status-bar">
+  <span class="counter" id="leftDisplay" title="Empty cells left">0</span>
+  <span class="note" id="noteDisplay"></span>
+  <span class="counter" id="timerDisplay" title="Time">0:00</span>
+</div>
+
+<div class="board-wrap" id="boardWrap"></div>
+
+<div class="win-banner" id="winBanner"></div>
+
+<div class="bottom-controls">
+  <div class="controls-row">
+    <button id="undoBtn">Undo</button>
+    <button id="hintBtn">Hint</button>
+  </div>
+  <p class="help">Click cycles X → O → empty, right-click backwards · <kbd>←↑→↓</kbd> move · <kbd>X</kbd> <kbd>O</kbd> place · <kbd>⌫</kbd> clear · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>H</kbd> hint</p>
+  <details class="rules">
+    <summary>How to play</summary>
+    <ul>
+      <li>Fill every cell with <b>X</b> or <b>O</b>.</li>
+      <li>Never more than two equal symbols next to each other — in a row or a column.</li>
+      <li>Every row and every column holds as many X as O.</li>
+      <li>No two rows are identical, and no two columns are.</li>
+    </ul>
+    <p>Every puzzle has exactly one solution and can be solved without guessing.</p>
+  </details>
+</div>
+
+<div class="bottom-pad"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
